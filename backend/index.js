@@ -1,46 +1,63 @@
-const pg = require('pg');
+const pg = require("pg");
 
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require("express");
+const bodyParser = require("body-parser");
 const app = express();
-const cors = require('cors')
+const cors = require("cors");
 
-const port=3000;
+const port = 3000;
 
 const pool = new pg.Pool({
-    user: 'secadv',
-    host: 'db',
-    database: 'pxldb',
-    password: 'ilovesecurity',
+    user: "secadv",
+    host: "db",
+    database: "pxldb",
+    password: "ilovesecurity",
     port: 5432,
-    connectionTimeoutMillis: 5000
-})
+    connectionTimeoutMillis: 5000,
+});
 
-console.log("Connecting...:")
+let whitelist = ["http://127.0.0.1:8080", "http://localhost:8080"];
+let corsOptions = {
+    origin: function (origin, callback) {
+        if (whitelist.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS."));
+        }
+    },
+};
 
-app.use(cors());
+console.log("Connecting...:");
+
 app.use(bodyParser.json());
 app.use(
     bodyParser.urlencoded({
         extended: true,
     })
-)
+);
 
-app.get('/authenticate/:username/:password', async (request, response) => {
-    const username = request.params.username;
-    const password = request.params.password;
+app.get(
+    "/authenticate/:username/:password",
+    cors(corsOptions),
+    async (request, response) => {
+        const username = request.params.username;
+        const password = request.params.password;
 
-    const query = `SELECT * FROM users WHERE user_name='${username}' and password='${password}'`;
-    console.log(query);
-    pool.query(query, (error, results) => {
-      if (error) {
-        throw error
-      }
-      response.status(200).json(results.rows)});
-      
-});
+        const query = {
+            text: "SELECT * FROM users WHERE user_name = $1 and password = $2",
+            values: [username, password],
+        };
+
+        console.log(query);
+        pool.query(query, (error, results) => {
+            if (error) {
+                throw error;
+            }
+            response.status(200).json(results.rows);
+        });
+    }
+);
 
 app.listen(port, () => {
-  console.log(`App running on port ${port}.`)
-})
-
+    console.log(`App running on port ${port}.`);
+});
