@@ -8,10 +8,10 @@ const cors = require("cors");
 const port = 3000;
 
 const pool = new pg.Pool({
-    user: "secadv",
+    user: process.env.DB_USER,
     host: "db",
-    database: "pxldb",
-    password: "ilovesecurity",
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASS,
     port: 5432,
     connectionTimeoutMillis: 5000,
 });
